@@ -12,9 +12,7 @@ import (
 var AppConfig Config
 
 func SetConfig() error {
-	cfg := getCfgDir()
-
-	configDir := filepath.Join(cfg, "toney")
+	configDir := getCfgDir()
 	configFile := filepath.Join(configDir, "config.toml")
 
 	// Create config directory if it doesn't exist
