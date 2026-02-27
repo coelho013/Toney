@@ -37,7 +37,7 @@ func (m Daily) DeleteTask(msg messages.TaskPopupMessage) {
 		return
 	}
 
-	m.Tasks = slices.Delete(m.Tasks, task.ID, task.ID+1)
+	m.Tasks = slices.Delete(m.Tasks, task.ID-1, task.ID)
 
 	WriteItems(m.Tasks)
 }
@@ -52,7 +52,7 @@ func (m Daily) StatusChangeTask(msg messages.TaskPopupMessage) {
 
 	task.Status = msg.Status
 
-	m.Tasks[task.ID] = task
+	m.Tasks[task.ID-1] = task
 
 	WriteItems(m.Tasks)
 }
@@ -73,7 +73,7 @@ func (m Daily) EditTask(msg messages.TaskPopupMessage) {
 
 	task.Status = oldTask.Status
 
-	m.Tasks[oldTask.ID] = task
+	m.Tasks[oldTask.ID-1] = task
 
 	WriteItems(m.Tasks)
 }
