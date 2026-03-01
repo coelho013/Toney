@@ -42,7 +42,7 @@ homebrew_casks:
         - "/usr/local/bin/toney"
     repository:
       owner: SourcewareLab
-      name: homebrew-tap
+      name: homebrew-toney
       token: "{{ .Env.GITHUB_TOKEN }}"
     commit_author:
       name: NucleoFusion 
