@@ -50,12 +50,16 @@ func GetItems() []Task {
 			fmt.Println(err2.Error())
 		}
 
-		tasks := make([]Task, 0)
-		csvutil.Unmarshal(content, &tasks)
+		allTasks := make([]Task, 0)
+		csvutil.Unmarshal(content, &allTasks)
 
-		for k := range tasks {
-			tasks[k].ID = k + 1
-			tasks[k].Status = enums.Pending
+		tasks := make([]Task, 0)
+		for _, task := range allTasks {
+			if task.Status == enums.Complete || task.Status == enums.Abandoned {
+				continue
+			}
+
+			tasks = append(tasks, task)
 		}
 
 		data, err2 := csvutil.Marshal(tasks)
