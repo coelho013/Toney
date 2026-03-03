@@ -61,21 +61,21 @@ func (m *SelectStatus) View() string {
 }
 
 func (m SelectStatus) GetText() string {
-	text := ""
+	var text strings.Builder
 	style := lipgloss.NewStyle().Width(m.Width).Padding(0, 2).Foreground(colors.ColorPalette().Text)
 
 	for idx, val := range m.Opts {
-		line := m.Opts[val]
+		line := val
 		if m.Selected == idx {
-			text += style.Background(colors.ColorPalette().MenuSelectedBg).
+			text.WriteString(style.Background(colors.ColorPalette().MenuSelectedBg).
 				Foreground(colors.ColorPalette().MenuSelectedText).
-				Render(m.TitleMap[line]) + "\n"
+				Render(m.TitleMap[line]) + "\n")
 
 			continue
 		}
 
-		text += style.Render(m.TitleMap[line]) + "\n"
+		text.WriteString(style.Render(m.TitleMap[line]) + "\n")
 	}
 
-	return strings.TrimSuffix(text, "\n")
+	return strings.TrimSuffix(text.String(), "\n")
 }
