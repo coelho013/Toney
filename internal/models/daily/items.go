@@ -53,14 +53,7 @@ func GetItems() []Task {
 		allTasks := make([]Task, 0)
 		csvutil.Unmarshal(content, &allTasks)
 
-		tasks := make([]Task, 0)
-		for _, task := range allTasks {
-			if task.Status == enums.Complete || task.Status == enums.Abandoned {
-				continue
-			}
-
-			tasks = append(tasks, task)
-		}
+		tasks := filterRolloverTasks(allTasks)
 
 		data, err2 := csvutil.Marshal(tasks)
 		if err2 != nil {
@@ -102,4 +95,16 @@ func GetYesterdayPath() string {
 	home, _ := os.UserHomeDir()
 	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 	return filepath.Join(home, config.AppConfig.General.NotesDir, ".daily", yesterday)
+}
+
+func filterRolloverTasks(tasks []Task) []Task {
+	result := make([]Task, 0)
+	for _, task := range tasks {
+		if task.Status == enums.Complete || task.Status == enums.Abandoned {
+			continue
+		}
+
+		result = append(result, task)
+	}
+	return result
 }
