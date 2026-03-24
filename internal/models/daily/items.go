@@ -45,22 +45,25 @@ func GetItems() []Task {
 			fmt.Println(err2.Error())
 		}
 
-		content, err2 := os.ReadFile(GetYesterdayPath())
-		if err2 != nil {
-			fmt.Println(err2.Error())
+		prevPath := getMostRecentDailyPath()
+		if prevPath != "" {
+			content, err2 := os.ReadFile(prevPath)
+			if err2 != nil {
+				fmt.Println(err2.Error())
+			}
+
+			var allTasks []Task
+			csvutil.Unmarshal(content, &allTasks)
+
+			tasks := filterRolloverTasks(allTasks)
+
+			data, err2 := csvutil.Marshal(tasks)
+			if err2 != nil {
+				fmt.Println(err2.Error())
+			}
+
+			f.Write(data)
 		}
-
-		allTasks := make([]Task, 0)
-		csvutil.Unmarshal(content, &allTasks)
-
-		tasks := filterRolloverTasks(allTasks)
-
-		data, err2 := csvutil.Marshal(tasks)
-		if err2 != nil {
-			fmt.Println(err2.Error())
-		}
-
-		f.Write(data)
 	} else if err != nil {
 		fmt.Println("Error: ", err.Error())
 	}
@@ -91,10 +94,28 @@ func GetPath() string {
 	return filepath.Join(home, config.AppConfig.General.NotesDir, ".daily", date)
 }
 
-func GetYesterdayPath() string {
+func getMostRecentDailyPath() string {
 	home, _ := os.UserHomeDir()
-	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
-	return filepath.Join(home, config.AppConfig.General.NotesDir, ".daily", yesterday)
+	dir := filepath.Join(home, config.AppConfig.General.NotesDir, ".daily")
+	today := time.Now().Format("2006-01-02")
+
+	return findMostRecentFile(dir, today)
+}
+
+func findMostRecentFile(dir string, today string) string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return ""
+	}
+
+	for i := len(entries) - 1; i >= 0; i-- {
+		name := entries[i].Name()
+		if !entries[i].IsDir() && name < today {
+			return filepath.Join(dir, name)
+		}
+	}
+
+	return ""
 }
 
 func filterRolloverTasks(tasks []Task) []Task {

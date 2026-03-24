@@ -1,6 +1,8 @@
 package daily
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/SourcewareLab/Toney/v2/internal/enums"
@@ -98,6 +100,74 @@ func TestFilterRolloverTasks(t *testing.T) {
 
 				if got[i].Status != tt.expected[i].Status {
 					t.Errorf("filterRolloverTasks() [%d].Status = %d, want %d", i, got[i].Status, tt.expected[i].Status)
+				}
+			}
+		})
+	}
+}
+
+func TestFindMostRecentFile(t *testing.T) {
+	tests := []struct {
+		name     string
+		files    []string
+		today    string
+		expected string
+	}{
+		{
+			name:     "empty directory",
+			files:    []string{},
+			today:    "2026-03-24",
+			expected: "",
+		},
+		{
+			name:     "returns yesterday",
+			files:    []string{"2026-03-23"},
+			today:    "2026-03-24",
+			expected: "2026-03-23",
+		},
+		{
+			name:     "skips today",
+			files:    []string{"2026-03-24"},
+			today:    "2026-03-24",
+			expected: "",
+		},
+		{
+			name:     "multi-day gap",
+			files:    []string{"2026-03-18", "2026-03-20"},
+			today:    "2026-03-24",
+			expected: "2026-03-20",
+		},
+		{
+			name:     "picks most recent before today",
+			files:    []string{"2026-03-01", "2026-03-15", "2026-03-23"},
+			today:    "2026-03-24",
+			expected: "2026-03-23",
+		},
+		{
+			name:     "ignores future files",
+			files:    []string{"2026-03-20", "2026-03-25"},
+			today:    "2026-03-24",
+			expected: "2026-03-20",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			for _, f := range tt.files {
+				os.WriteFile(filepath.Join(dir, f), []byte{}, 0o644)
+			}
+
+			got := findMostRecentFile(dir, tt.today)
+
+			if tt.expected == "" {
+				if got != "" {
+					t.Errorf("findMostRecentFile() = %q, want empty string", got)
+				}
+			} else {
+				want := filepath.Join(dir, tt.expected)
+				if got != want {
+					t.Errorf("findMostRecentFile() = %q, want %q", got, want)
 				}
 			}
 		})
