@@ -25,3 +25,30 @@ func TestSortPriority(t *testing.T) {
 		})
 	}
 }
+
+func TestStartsWithDate(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{"YYYYMMDD", "20260328", true},
+		{"YYYY-MM-DD", "2026-03-28", true},
+		{"YYYYMMDD with suffix", "20260328-standup.md", true},
+		{"YYYY-MM-DD with suffix", "2026-03-28-standup.md", true},
+		{"regular file", "todo.md", false},
+		{"short number", "2026", false},
+		{"dot file", ".gitignore", false},
+		{"empty string", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := startsWithDate(tt.input)
+			if got != tt.expected {
+				t.Errorf("startsWithDate(%q) = %v, want %v",
+					tt.input, got, tt.expected)
+			}
+		})
+	}
+}
