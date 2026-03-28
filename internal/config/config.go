@@ -45,7 +45,7 @@ func SetConfig() error {
 
 func getCfgDir() string {
 	switch runtime.GOOS {
-	case "linux", "darwin":
+	case "linux", "darwin", "android":
 		home, _ := os.UserHomeDir()
 		return filepath.Join(home, ".config", "toney")
 	case "windows":
