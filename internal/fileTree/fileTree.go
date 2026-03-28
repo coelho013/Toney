@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/SourcewareLab/Toney/v2/internal/colors"
@@ -45,6 +46,17 @@ func buildTree(parent *Node, path string, depth int) (*Node, error) {
 			child, _ := buildTree(&node, childPath, depth+1)
 			node.Children = append(node.Children, child)
 		}
+
+		sort.Slice(node.Children, func(i, j int) bool {
+			a, b := node.Children[i], node.Children[j]
+
+			priorityA, priorityB := sortPriority(a), sortPriority(b)
+			if priorityA != priorityB {
+				return priorityA < priorityB
+			}
+
+			return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+		})
 	}
 
 	return &node, nil
@@ -123,4 +135,19 @@ func ListFilesRel(baseDir string) ([]string, error) {
 		return nil, err
 	}
 	return relPaths, nil
+}
+
+func sortPriority(n *Node) int {
+	isDot := strings.HasPrefix(n.Name, ".")
+
+	switch {
+	case isDot && n.IsDirectory:
+		return 0
+	case n.IsDirectory:
+		return 1
+	case isDot:
+		return 2
+	default:
+		return 3
+	}
 }
