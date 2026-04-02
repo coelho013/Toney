@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/SourcewareLab/Toney/v2/internal/config"
@@ -76,6 +77,10 @@ func GetItems() []Task {
 		fmt.Println(err.Error())
 	}
 
+	slices.SortStableFunc(tasks, func(a, b Task) int {
+		return getStatusOrder(a.Status) - getStatusOrder(b.Status)
+	})
+
 	return tasks
 }
 
@@ -128,4 +133,19 @@ func filterRolloverTasks(tasks []Task) []Task {
 		result = append(result, task)
 	}
 	return result
+}
+
+func getStatusOrder(s enums.TaskStatus) int {
+	switch s {
+	case enums.Started:
+		return 0
+	case enums.Pending:
+		return 1
+	case enums.Abandoned:
+		return 2
+	case enums.Complete:
+		return 3
+	default:
+		return 4
+	}
 }

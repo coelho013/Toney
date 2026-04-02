@@ -106,6 +106,40 @@ func TestFilterRolloverTasks(t *testing.T) {
 	}
 }
 
+func TestGetStatusOrder(t *testing.T) {
+	tests := []struct {
+		name   string
+		status enums.TaskStatus
+		want   int
+	}{
+		{"started is first", enums.Started, 0},
+		{"pending is second", enums.Pending, 1},
+		{"abandoned is third", enums.Abandoned, 2},
+		{"complete is last", enums.Complete, 3},
+		{"unknown status returns 4", enums.TaskStatus(99), 4},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getStatusOrder(tt.status)
+			if got != tt.want {
+				t.Errorf("getStatusOrder(%d) = %d, want %d", tt.status, got, tt.want)
+			}
+		})
+	}
+
+	// Verify relative ordering: Started < Pending < Abandoned < Complete
+	if getStatusOrder(enums.Started) >= getStatusOrder(enums.Pending) {
+		t.Error("Started should sort before Pending")
+	}
+	if getStatusOrder(enums.Pending) >= getStatusOrder(enums.Abandoned) {
+		t.Error("Pending should sort before Abandoned")
+	}
+	if getStatusOrder(enums.Abandoned) >= getStatusOrder(enums.Complete) {
+		t.Error("Abandoned should sort before Complete")
+	}
+}
+
 func TestFindMostRecentFile(t *testing.T) {
 	tests := []struct {
 		name     string
