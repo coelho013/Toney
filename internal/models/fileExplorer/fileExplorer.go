@@ -1,8 +1,6 @@
 package fileexplorer
 
 import (
-	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -36,11 +34,10 @@ type FileExplorer struct {
 	Keymap        keymap.ExplorerKeyMap
 }
 
-func NewFileExplorer(w int, h int) *FileExplorer {
+func NewFileExplorer(w int, h int) (*FileExplorer, error) {
 	root, err := filetree.CreateTree()
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		return nil, err
 	}
 
 	return &FileExplorer{
@@ -52,7 +49,7 @@ func NewFileExplorer(w int, h int) *FileExplorer {
 		CurrentIndex: 0,
 		VisibleNodes: filetree.FlattenVisibleTree(root),
 		Keymap:       keymap.NewExplorerKeyMap(),
-	}
+	}, nil
 }
 
 func (m FileExplorer) Init() tea.Cmd {

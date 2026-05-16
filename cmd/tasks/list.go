@@ -34,9 +34,15 @@ func ListCmd() *cobra.Command {
 
 			dl := CmdDelegate{Verbose: opts.Verbose}
 			ht := dl.Height() + dl.Spacing()
-			tasks := daily.TaskToItems(daily.GetItems())
 
-			lst := list.New(tasks, dl, 1000, len(tasks)*ht)
+			tasks, err := daily.GetItems()
+			if err != nil {
+				return fmt.Errorf("failed to get tasks: %w", err)
+			}
+
+			taskItems := daily.TaskToItems(tasks)
+
+			lst := list.New(taskItems, dl, 1000, len(taskItems)*ht)
 			lst.SetShowTitle(false)
 			lst.SetShowHelp(false)
 			lst.SetShowFilter(false)

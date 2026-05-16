@@ -7,6 +7,7 @@ import (
 	"github.com/SourcewareLab/Toney/v2/internal/messages"
 	taskpopup "github.com/SourcewareLab/Toney/v2/internal/models/taskPopup"
 	"github.com/SourcewareLab/Toney/v2/internal/styles"
+	"github.com/SourcewareLab/Toney/v2/internal/utils"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -25,8 +26,11 @@ type Daily struct {
 	Help      help.Model
 }
 
-func NewDaily(w int, h int) *Daily {
-	tasks := GetItems()
+func NewDaily(w int, h int) (*Daily, error) {
+	tasks, err := GetItems()
+	if err != nil {
+		return nil, err
+	}
 
 	lst := list.New(TaskToItems(tasks), TaskDelegate{}, w/2, 2*h/3)
 	km := list.DefaultKeyMap()
@@ -42,7 +46,7 @@ func NewDaily(w int, h int) *Daily {
 		Tasks:  tasks,
 		Keymap: keymap.NewDailyTaskMap(),
 		Help:   help.New(),
-	}
+	}, nil
 }
 
 func (m *Daily) Init() tea.Cmd {
@@ -52,20 +56,27 @@ func (m *Daily) Init() tea.Cmd {
 func (m *Daily) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case messages.TaskPopupMessage:
+		var err error
 		switch msg.Type {
 		case enums.CreateRecurring:
 			fallthrough
 		case enums.CreateUnique:
-			m.CreateTask(msg, msg.Type == enums.CreateUnique)
+			err = m.CreateTask(msg, msg.Type == enums.CreateUnique)
 		case enums.Delete:
-			m.DeleteTask(msg)
+			err = m.DeleteTask(msg)
 		case enums.ChangeStatus:
-			m.StatusChangeTask(msg)
+			err = m.StatusChangeTask(msg)
 		case enums.Edit:
-			m.EditTask(msg)
+			err = m.EditTask(msg)
 		}
 
-		m.Refresh()
+		if err != nil {
+			return m, utils.ReturnError("Daily", "Task Operation Error", err)
+		}
+
+		if err := m.Refresh(); err != nil {
+			return m, utils.ReturnError("Daily", "Error Refreshing Tasks", err)
+		}
 		m.ShowPopup = false
 		return m, nil
 	case tea.KeyMsg:
@@ -144,8 +155,12 @@ func (m *Daily) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, main, help)
 }
 
-func (m *Daily) Refresh() {
-	m.Tasks = GetItems()
+func (m *Daily) Refresh() error {
+	tasks, err := GetItems()
+	if err != nil {
+		return err
+	}
+	m.Tasks = tasks
 
 	lst := list.New(TaskToItems(m.Tasks), TaskDelegate{}, m.Width/2, 2*m.Height/3)
 	km := list.DefaultKeyMap()
@@ -155,4 +170,5 @@ func (m *Daily) Refresh() {
 	lst.SetShowTitle(false)
 
 	m.List = lst
+	return nil
 }

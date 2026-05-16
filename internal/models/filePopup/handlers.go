@@ -8,24 +8,30 @@ import (
 	"github.com/SourcewareLab/Toney/v2/internal/enums"
 	filetree "github.com/SourcewareLab/Toney/v2/internal/fileTree"
 	"github.com/SourcewareLab/Toney/v2/internal/messages"
+	"github.com/SourcewareLab/Toney/v2/internal/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func HandleEnter(m *FilePopup) (tea.Model, tea.Cmd) {
 	path := GetPath(m.Node)
+	var err error
 
 	switch m.Type {
 	case enums.FileCreate:
-		Create(path, m.TextInput.Value(), m.Node)
+		err = Create(path, m.TextInput.Value(), m.Node)
 	case enums.FileDelete:
-		Delete(path[0:len(path)-1], m.TextInput.Value())
+		err = Delete(path[0:len(path)-1], m.TextInput.Value())
 	case enums.FileRename:
-		Rename(path[0:len(path)-1], m.TextInput.Value())
+		err = Rename(path[0:len(path)-1], m.TextInput.Value())
 	case enums.FileMove:
-		Move(path[0:len(path)-1], m.TextInput.Value())
+		err = Move(path[0:len(path)-1], m.TextInput.Value())
 	default:
 		fmt.Println("default")
+	}
+
+	if err != nil {
+		return m, utils.ReturnError("FilePopup", "File Operation Error", err)
 	}
 
 	return m, tea.Batch(func() tea.Msg {
@@ -36,37 +42,37 @@ func HandleEnter(m *FilePopup) (tea.Model, tea.Cmd) {
 		})
 }
 
-func Move(path string, value string) {
+func Move(path string, value string) error {
 	err := os.Rename(path, value)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
-func Rename(path string, value string) {
+func Rename(path string, value string) error {
 	newpathArr := strings.Split(path, "/")
 	newpath := strings.Join(newpathArr[0:len(newpathArr)-1], "/") + "/" + value
 	err := os.Rename(path, newpath)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
-func Delete(path string, value string) {
+func Delete(path string, value string) error {
 	if value != "y" {
-		return
+		return nil
 	}
 
 	err := os.Remove(path)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
-func Create(path string, value string, n *filetree.Node) {
+func Create(path string, value string, n *filetree.Node) error {
 	if !n.IsDirectory {
 		pathArr := strings.Split(path, "/")
 		pathArr = pathArr[0 : len(pathArr)-2]
@@ -76,16 +82,15 @@ func Create(path string, value string, n *filetree.Node) {
 	if strings.HasSuffix(value, "/") {
 		err := os.MkdirAll(path+value, 0o755)
 		if err != nil {
-			fmt.Println(err.Error())
-			// os.Exit(1)
+			return err
 		}
 	} else {
 		_, err := os.Create(path + value)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			return err
 		}
 	}
+	return nil
 }
 
 func MapExpanded(new *filetree.Node, old *filetree.Node) {

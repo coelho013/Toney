@@ -63,7 +63,11 @@ func CreatCmd() *cobra.Command {
 			form := huh.NewForm(grps...).WithTheme(styles.HuhTheme())
 			form.Run()
 
-			tasks := daily.GetItems()
+			tasks, err := daily.GetItems()
+			if err != nil {
+				return fmt.Errorf("failed to get tasks: %w", err)
+			}
+
 			tasks = append(tasks, daily.Task{
 				TaskTitle: opts.Title,
 				TaskType:  opts.Type,
@@ -71,7 +75,9 @@ func CreatCmd() *cobra.Command {
 				Status:    opts.Status,
 			})
 
-			daily.WriteItems(tasks)
+			if err := daily.WriteItems(tasks); err != nil {
+				return fmt.Errorf("failed to write tasks: %w", err)
+			}
 
 			return nil
 		},

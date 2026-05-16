@@ -1,7 +1,6 @@
 package daily
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -36,60 +35,74 @@ func TaskToItems(tasks []Task) []list.Item {
 	return list
 }
 
-func GetItems() []Task {
+func GetItems() ([]Task, error) {
 	path := GetPath()
 
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		f, err2 := os.Create(path)
 		if err2 != nil {
-			fmt.Println(err2.Error())
+			return nil, err2
 		}
 
 		prevPath := getMostRecentDailyPath()
 		if prevPath != "" {
 			content, err2 := os.ReadFile(prevPath)
 			if err2 != nil {
-				fmt.Println(err2.Error())
+				return nil, err2
 			}
 
 			var allTasks []Task
-			csvutil.Unmarshal(content, &allTasks)
+			if err := csvutil.Unmarshal(content, &allTasks); err != nil {
+				return nil, err
+			}
 
 			tasks := filterRolloverTasks(allTasks)
 
 			data, err2 := csvutil.Marshal(tasks)
 			if err2 != nil {
-				fmt.Println(err2.Error())
+				return nil, err2
 			}
 
-			f.Write(data)
+			if _, err := f.Write(data); err != nil {
+				return nil, err
+			}
 		}
 	} else if err != nil {
-		fmt.Println("Error: ", err.Error())
+		return nil, err
 	}
 
-	content, _ := os.ReadFile(path)
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
 
 	tasks := make([]Task, 0)
 	err = csvutil.Unmarshal(content, &tasks)
 	if err != nil {
-		fmt.Println(err.Error())
+		return nil, err
 	}
 
 	slices.SortStableFunc(tasks, func(a, b Task) int {
 		return getStatusOrder(a.Status) - getStatusOrder(b.Status)
 	})
 
-	return tasks
+	return tasks, nil
 }
 
-func WriteItems(tasks []Task) {
+func WriteItems(tasks []Task) error {
 	path := GetPath()
 
-	data, _ := csvutil.Marshal(tasks)
+	data, err := csvutil.Marshal(tasks)
+	if err != nil {
+		return err
+	}
 
-	os.WriteFile(path, data, 0o644)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GetPath() string {

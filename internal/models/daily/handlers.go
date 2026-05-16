@@ -7,7 +7,7 @@ import (
 	"github.com/SourcewareLab/Toney/v2/internal/messages"
 )
 
-func (m Daily) CreateTask(msg messages.TaskPopupMessage, isUnique bool) {
+func (m Daily) CreateTask(msg messages.TaskPopupMessage, isUnique bool) error {
 	task := Task{
 		TaskTitle: msg.Title,
 		TaskDesc:  msg.Desc,
@@ -22,42 +22,42 @@ func (m Daily) CreateTask(msg messages.TaskPopupMessage, isUnique bool) {
 
 	m.Tasks = append(m.Tasks, task)
 
-	WriteItems(m.Tasks)
+	return WriteItems(m.Tasks)
 }
 
-func (m Daily) DeleteTask(msg messages.TaskPopupMessage) {
+func (m Daily) DeleteTask(msg messages.TaskPopupMessage) error {
 	if !msg.IsDeleted {
-		return
+		return nil
 	}
 
 	item := m.List.SelectedItem()
 
 	task, ok := item.(Task)
 	if !ok { // Making sure that item is of type Task
-		return
+		return nil
 	}
 
 	m.Tasks = slices.Delete(m.Tasks, task.ID-1, task.ID)
 
-	WriteItems(m.Tasks)
+	return WriteItems(m.Tasks)
 }
 
-func (m Daily) StatusChangeTask(msg messages.TaskPopupMessage) {
+func (m Daily) StatusChangeTask(msg messages.TaskPopupMessage) error {
 	item := m.List.SelectedItem()
 
 	task, ok := item.(Task)
 	if !ok { // Making sure that item is of type Task
-		return
+		return nil
 	}
 
 	task.Status = msg.Status
 
 	m.Tasks[task.ID-1] = task
 
-	WriteItems(m.Tasks)
+	return WriteItems(m.Tasks)
 }
 
-func (m Daily) EditTask(msg messages.TaskPopupMessage) {
+func (m Daily) EditTask(msg messages.TaskPopupMessage) error {
 	task := Task{
 		TaskTitle: msg.Title,
 		TaskDesc:  msg.Desc,
@@ -68,12 +68,12 @@ func (m Daily) EditTask(msg messages.TaskPopupMessage) {
 
 	oldTask, ok := item.(Task)
 	if !ok { // Making sure that item is of type Task
-		return
+		return nil
 	}
 
 	task.Status = oldTask.Status
 
 	m.Tasks[oldTask.ID-1] = task
 
-	WriteItems(m.Tasks)
+	return WriteItems(m.Tasks)
 }

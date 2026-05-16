@@ -1,7 +1,6 @@
 package viewer
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/SourcewareLab/Toney/v2/internal/keymap"
 	"github.com/SourcewareLab/Toney/v2/internal/messages"
 	"github.com/SourcewareLab/Toney/v2/internal/models/fzf"
+	"github.com/SourcewareLab/Toney/v2/internal/utils"
 
 	"github.com/SourcewareLab/Toney/v2/internal/colors"
 	"github.com/charmbracelet/bubbles/key"
@@ -68,12 +68,20 @@ func (m Viewer) Init() tea.Cmd {
 func (m *Viewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case messages.EditorClose:
-		m.Content = m.ReadFile()
+		content, err := m.ReadFile()
+		if err != nil {
+			return m, utils.ReturnError("Viewer", "Error Reading File", err)
+		}
+		m.Content = content
 		m.Viewport.SetContent(m.RenderMarkdown(m.Content, m.Width))
 		return m, nil
 	case messages.ChangeFileMessage:
 		m.Path = msg.Path
-		m.Content = m.ReadFile()
+		content, err := m.ReadFile()
+		if err != nil {
+			return m, utils.ReturnError("Viewer", "Error Reading File", err)
+		}
+		m.Content = content
 		m.Viewport.SetContent(m.RenderMarkdown(m.Content, m.Width))
 		m.Viewport.YOffset = 0
 		m.Highlighted = -1
@@ -146,16 +154,15 @@ func (m *Viewer) Header() string {
 	return ""
 }
 
-func (m *Viewer) ReadFile() []string { // Change to editor type when config done
+func (m *Viewer) ReadFile() ([]string, error) {
 	path := strings.TrimSuffix(m.Path, "/")
 
 	content, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Println(err.Error())
-		content = ([]byte)(fmt.Sprintf("An error occured while reading the file:%s\n%s", m.Path, err.Error()))
+		return nil, err
 	}
 
-	return strings.Split(string(content), "\n")
+	return strings.Split(string(content), "\n"), nil
 }
 
 func (m *Viewer) RenderMarkdown(md []string, width int) string {
