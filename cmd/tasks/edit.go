@@ -29,7 +29,10 @@ func EditCmd() *cobra.Command {
 				return fmt.Errorf("failed to load config: %v\n\n%s", err, "Try running the `toney init` command and try again.")
 			}
 
-			tasks := daily.GetItems()
+			tasks, err := daily.GetItems()
+			if err != nil {
+				return fmt.Errorf("failed to get tasks: %w", err)
+			}
 
 			options := make([]huh.Option[int], 0)
 			for k, v := range tasks {
@@ -113,7 +116,9 @@ func EditCmd() *cobra.Command {
 
 			tasks[opts.ID] = task
 
-			daily.WriteItems(tasks)
+			if err := daily.WriteItems(tasks); err != nil {
+				return fmt.Errorf("failed to write tasks: %w", err)
+			}
 
 			return nil
 		},

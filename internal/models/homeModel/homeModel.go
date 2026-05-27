@@ -31,22 +31,27 @@ type HomeModel struct {
 	Help         help.Model
 }
 
-func NewHome(w int, h int) *HomeModel {
+func NewHome(w int, h int) (*HomeModel, error) {
 	home, _ := os.UserHomeDir()
 	path := filepath.Join(home, config.AppConfig.General.NotesDir)
 	files, _ := filetree.ListFilesRel(path)
+
+	fileExplorer, err := fileexplorer.NewFileExplorer(w, h)
+	if err != nil {
+		return nil, err
+	}
 
 	return &HomeModel{
 		Width:        w,
 		Height:       h,
 		ShowFinder:   false,
 		FocusOn:      enums.File,
-		FileExplorer: fileexplorer.NewFileExplorer(w, h),
+		FileExplorer: fileExplorer,
 		Viewer:       viewer.NewViewer(w, h),
 		Finder:       fzf.NewFzf(files, w, h),
 		Keymap:       keymap.NewHomeKeyMap(),
 		Help:         help.New(),
-	}
+	}, nil
 }
 
 func (m HomeModel) Init() tea.Cmd {

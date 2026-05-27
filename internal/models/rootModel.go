@@ -180,9 +180,20 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Diary.Update(msg)
 			m.Daily.Update(msg)
 		} else {
-			m.Home = homemodel.NewHome(msg.Width, msg.Height)
+			homeModel, err := homemodel.NewHome(msg.Width, msg.Height)
+			if err != nil {
+				return m, utils.ReturnError("Root", "Error Initializing Home", err)
+			}
+			m.Home = homeModel
+
 			m.Menu = menu.NewMenu(msg.Width, msg.Height)
-			m.Daily = daily.NewDaily(msg.Width, msg.Height)
+
+			dailyModel, err := daily.NewDaily(msg.Width, msg.Height)
+			if err != nil {
+				return m, utils.ReturnError("Root", "Error Initializing Daily Tasks", err)
+			}
+			m.Daily = dailyModel
+
 			m.Diary = diary.NewDiary(msg.Width, msg.Height)
 		}
 

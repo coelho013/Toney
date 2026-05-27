@@ -26,7 +26,10 @@ func DeleteCmd() *cobra.Command {
 				return fmt.Errorf("failed to load config: %v\n\n%s", err, "Try running the `toney init` command and try again.")
 			}
 
-			tasks := daily.GetItems()
+			tasks, err := daily.GetItems()
+			if err != nil {
+				return fmt.Errorf("failed to get tasks: %w", err)
+			}
 
 			options := make([]huh.Option[int], 0)
 			for _, v := range tasks {
@@ -58,7 +61,9 @@ func DeleteCmd() *cobra.Command {
 			fmt.Printf("Deleted Task: `%s`\n", tasks[opts.ID].Title())
 			tasks = slices.Delete(tasks, opts.ID-1, opts.ID)
 
-			daily.WriteItems(tasks)
+			if err := daily.WriteItems(tasks); err != nil {
+				return fmt.Errorf("failed to write tasks: %w", err)
+			}
 
 			return nil
 		},
